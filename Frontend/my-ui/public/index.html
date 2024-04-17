@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Visualization</title>
+  <!-- Include D3.js library -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+  <div id="chart"></div>
+  <div>
+    <!-- Buttons for selecting time range and frequency -->
+    <button onclick="filterData('hour', 1)">1 Hour</button>
+    <button onclick="filterData('8hour', 8)">8 Hours</button>
+    <button onclick="filterData('day', 24)">24 Hours</button>
+    <button onclick="filterData('week', 24 * 7)">1 Week</button>
+    <button onclick="filterData('month', 24 * 30)">1 Month</button>
+  </div>
+
+  <!-- Script section for frontend logic -->
+  <script>
+    function filterData(frequency, duration) {
+      const startTime = new Date().getTime() - duration * 3600000;
+      fetch('/api/filterData', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ startTime, duration, frequency }),
+      })
+      .then((response) => response.json())
+      .then((data) => {
+        // Call a function to update the chart with filtered data
+        updateChart(data);
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+      });
+    }
+
+    function updateChart(data) {
+      // Clear existing chart
+      d3.select('#chart').selectAll('*').remove();
+
+      // Create a new SVG element for the chart
+      const svg = d3.select('#chart')
+        .append('svg')
+        .attr('width', 500)
+        .attr('height', 300);
+
+      // Create bars based on machine status
+      svg.selectAll('rect')
+        .data(data)
+        .enter()
+        .append('rect')
+        .attr('x', (d, i) => i * 30)
+        .attr('y', (d) => 300 - d.machine_status * 50)
+        .attr('width', 25)
+        .attr('height', (d) => d.machine_status * 50)
+        .attr('fill', (d) => {
+          if (d.machine_status === 0) {
+            return 'yellow';
+          } else if (d.machine_status === 1) {
+            return 'green';
+          } else {
+            return 'red';
+          }
+        });
+    }
+  </script>
+</body>
+</html>
